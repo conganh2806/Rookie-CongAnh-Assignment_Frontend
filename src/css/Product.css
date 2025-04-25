@@ -1,0 +1,54 @@
+.product-image {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.actions-container {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+}
+
+.filter-container {
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.filter-container .MuiSelect-root {
+    min-width: 200px;
+}
+
+.filter-container .search-bar {
+    margin: 0 16px;
+}
+
+.add-product-button {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.button-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 16px;
+}
+
+.product-container {
+    width: 100%;
+    max-width: 1400px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    overflow-x: auto;
+}
+
+.filter-box {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}

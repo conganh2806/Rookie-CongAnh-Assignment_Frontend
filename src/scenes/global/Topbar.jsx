@@ -11,17 +11,17 @@ import SearchIcon from "@mui/icons-material/Search";
 
 const Topbar = () => { 
     const theme = useTheme();
-    const color = tokens(theme);
+    const colors = tokens(theme);
     const colorMode = useContext(ColorModeContext);
 
     return (
         <Box display="flex" justifyContent="space-between" p={2}>
             <Box 
                 display="flex" 
-                backgroundColor={color.primary[400]} 
+                backgroundColor={colors.primary[400]} 
                 borderRadius="3px"
             >
-                <InputBase sx={{ ml:2, flex: 1}} placeholder="Search" />
+                <InputBase sx={{ ml:2, flex: 1}} placeholder="Search" color={colors.grey[600]}/>
                 <IconButton type="button" sx={{ p: 1}}>
                     <SearchIcon />
                 </IconButton>
