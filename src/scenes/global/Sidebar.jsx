@@ -20,6 +20,7 @@ import LoginIcon from "@mui/icons-material/Login";
 import AppRegistrationIcon from "@mui/icons-material/AppRegistration";
 import { useAuth } from "../../context/auth-context";
 import LogoutIcon from "@mui/icons-material/Logout";
+import CategoryIcon from '@mui/icons-material/Category';
 
 const Item = ({ title, to, icon, selected, setSelected, onClick }) => {
   const theme = useTheme();
@@ -148,6 +149,13 @@ const Sidebar = () => {
               title="Manage Product"
               to="/products"
               icon={<PeopleOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Manage Category"
+              to="/categories"
+              icon={<CategoryIcon/>}
               selected={selected}
               setSelected={setSelected}
             />

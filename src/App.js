@@ -21,6 +21,8 @@ import PrivateRoute from "./components/PrivateRoute";
 import { ToastContainer } from "react-toastify";
 import CreateProduct from "./scenes/product/CreateProduct";
 import './css/App.css';
+import Category from "./scenes/category";
+import UpdateProduct from "./scenes/product/UpdateProduct";
 
 function App() {
   const [theme, colorMode] = useMode();
@@ -44,6 +46,8 @@ function App() {
                             <Route path="/" element={<Dashboard />}></Route>
                             <Route path="/products" element={<Product />}></Route>
                             <Route path="/products/new" element={<CreateProduct />}></Route>
+                            <Route path="/products/edit/:id" element={<UpdateProduct />}></Route>
+                            <Route path="/categories" element={<Category />}></Route>
                             {/* <Route path="/contacts" element={<Contacts />}></Route> */}
                             {/* <Route path="/invoices" element={<Invoices />}></Route> */}
                             {/* <Route path="/form" element={<Form />}></Route> */}

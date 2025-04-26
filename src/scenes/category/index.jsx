@@ -43,7 +43,7 @@ import "../../css/Product.css";
 import debounce from "lodash.debounce";
 import { usePaginationQuery } from "../../hooks/usePaginationQuery.js";
 
-const Product = () => {
+const Category = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -72,6 +72,7 @@ const Product = () => {
     setLimit,
     setSearchText,
   } = usePaginationQuery();
+
 
   const columns = [
     {
@@ -356,7 +357,7 @@ const Product = () => {
           sortModel={sortModel}
           filterModel={filterModel}
           paginationMode="server"
-          // sortingMode="server"
+          sortingMode="server"
           filterMode="server"
           pageSizeOptions={[5, 10, 15]}
           onPaginationModelChange={(model) => {
@@ -373,4 +374,4 @@ const Product = () => {
   );
 };
 
-export default Product;
+export default Category;

@@ -18,13 +18,29 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import axiosInstance from "../../services/httpService";
 import useCategories from "../../hooks/useCategories";
-import { createProduct, uploadProductsImage } from "../../services/productService";
+import { createProduct, updateProduct, uploadProductsImage } from "../../services/productService";
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { styled } from '@mui/material/styles';
+import UploadImage from "../../components/UploadImage";
+import { MINIO_BUCKETNAME, MINIO_URL } from "../../constants/config";
 
-const CreateProduct = () => {
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
+
+const CreateProduct = ({isUpdate = false, defaultValues = null}) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => defaultValues || {
     name: "",
     description: "",
     price: 0,
@@ -36,6 +52,7 @@ const CreateProduct = () => {
   });
   const { categories } = useCategories();
   const [file, setFile] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -61,28 +78,52 @@ const CreateProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const product = await createProduct(formData);
-      const productId = product.id;
-      toast.success("Product created successfully!");
+      let productId = defaultValues?.id;
+
+      if(isUpdate && defaultValues) 
+      { 
+        await updateProduct(productId, formData);
+        toast.success("Product updated successfully!");
+      } else { 
+        const product = await createProduct(formData);
+        productId = product.id;
+        toast.success("Product created successfully!");
+        
+      }
       if(file && productId) { 
         await uploadProductsImage(file, productId);
       }
-
+    
       navigate("/products");
+      setPreviewImage(null);
     } catch (error) {
       console.log(error);
       toast.error("Failed to create product.", error);
     }
   };
 
-  const handleImageChange = (e) => { 
-    setFile(e.target.files[0]);
-  }
+  useEffect(() => {
+    if (defaultValues) {
+      console.log(defaultValues);
+      setFormData({
+        ...defaultValues,
+        category_ids: defaultValues.category_ids || [""],
+      });
+  
+      if (defaultValues.image_url) {
+        const correctImageUrl = `${MINIO_URL}/${MINIO_BUCKETNAME}/${defaultValues.image_url}`;
+        setPreviewImage(correctImageUrl);
+      }
+    }
+  }, [defaultValues]);
+
+  console.log('formData.image_url:', formData.image_url);
+  console.log('previewImage:', previewImage);
 
   return (
     <Box sx={{ padding: "20px", margin: "50px" }}>
       <Typography variant="h4" gutterBottom>
-        Create New Product
+        {isUpdate ? "Update Product" : "Create New Product"}
       </Typography>
       <form onSubmit={handleSubmit}>
         <FormGroup>
@@ -149,17 +190,10 @@ const CreateProduct = () => {
             }
             label="Is Featured"
           />
-          <Box mt={2}>
-            <Typography variant="h6" color={colors.grey[600]}>
-              Upload Image
-            </Typography>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              style={{ marginTop: "10px" }}
-            />
-          </Box>
+          <UploadImage 
+            onFileChange={(file) => setFile(file)}
+            initialImage={previewImage}
+          />
           <Box mt={2}>
             <Typography variant="h6" color={colors.grey[600]}>
               Categories
@@ -168,7 +202,7 @@ const CreateProduct = () => {
               <FormControl fullWidth margin="normal" key={index}>
                 {/* <InputLabel shrink={true} color={colors.grey[600]}>Category {index + 1}</InputLabel> */}
                 <Select
-                  value={catId}
+                  value={catId || ""}
                   onChange={(e) => handleCategoryChange(index, e.target.value)}
                   color={colors.grey[600]}
                 >
@@ -197,7 +231,7 @@ const CreateProduct = () => {
           type="submit"
           sx={{ mt: 3 }}
         >
-          Create
+          {isUpdate ? 'Update' : 'Create'}
         </Button>
       </form>
     </Box>
