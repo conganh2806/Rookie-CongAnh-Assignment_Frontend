@@ -178,6 +178,7 @@ const Product = () => {
   const handleDuplicate = async (product) => {
     const newProduct = {
       ...product,
+      name: product.name + " (Copy)",
     };
     try {
       await createProductByCategoryNames(newProduct);

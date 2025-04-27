@@ -1,139 +1,151 @@
-import {
-  Box,
-  Button,
-  Chip,
-  InputBase,
-  Select,
-  Tooltip,
-  Typography,
-  useTheme,
-} from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
-import { tokens } from "../../themes";
+import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Select, TextField, Tooltip, useTheme } from "@mui/material";
 import Header from "../../components/Header";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  createProductByCategoryNames,
-  deleteProduct,
-  deleteProducts,
-  fetchProducts,
-  fetchProductsWithCategory,
-} from "../../services/productService";
-import { toast } from "react-toastify";
-import AddIcon from "@mui/icons-material/Add";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import MenuItem from "@mui/material/MenuItem";
-import useCategories from "../../hooks/useCategories";
-import { DataTable } from "primereact/datatable";
+import '../../css/Category.css';
+import { DataGrid } from "@mui/x-data-grid";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { handleAxiosError } from "../../utils/handleAxiosError.ts";
+import { createCategory, deleteCategory, fetchCategories, updateCategory } from "../../services/categoryService";
 import EditIcon from "@mui/icons-material/Edit";
+import { tokens } from "../../themes";
+import AddIcon from "@mui/icons-material/Add";
+import { toast } from "react-toastify";
 import DeleteIcon from "@mui/icons-material/Delete";
-import IconButton from "@mui/material/IconButton";
 import AlertDialog from "../../components/Dialogue/AlertDialogue.jsx";
-import { Image } from "primereact/image";
-import {
-  API_BASE_URL,
-  MINIO_BUCKETNAME,
-  MINIO_URL,
-} from "../../constants/config.js";
-import FileCopyIcon from "@mui/icons-material/FileCopy";
-import { DEFAULT_PAGINATION } from "../../constants/productPaginationConfig.ts";
-import SearchBar from "../../components/SearchBar.jsx";
-import "../../css/Product.css";
-import debounce from "lodash.debounce";
-import { usePaginationQuery } from "../../hooks/usePaginationQuery.js";
 
 const Category = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const { categories: categoryOptions, loading: categoryLoading } =
-    useCategories();
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
-  const [rowSelectionModel, setRowSelectionModel] = useState({
-    type: "include",
-    ids: new Set(),
-  });
-  const navigate = useNavigate();
-  const [products, setProducts] = useState([]);
-  const [meta, setMeta] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [sortModel, setSortModel] = useState([]);
-  const [filterModel, setFilterModel] = useState({
-    items: [],
-  });
+  const [categories, setCategories] = useState([]);
+  const [categoryNames, setCategoryNames] = useState({});
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [openDeleteOneDialog, setOpenDeleteOneDialog] = useState(false);
-  const [openDeleteManyDialog, setOpenDeleteManyDialog] = useState(false);
-  const {
-    paginationModel,
-    searchText,
-    setPage,
-    setLimit,
-    setSearchText,
-  } = usePaginationQuery();
+  const navigate = useNavigate();
 
+  const fetchData = useCallback(async () => { 
+    setLoading(true);
+    try { 
+      let res = await fetchCategories();
+      console.log(res);
+      const flattenCategories = flattenCategoryData(res);
+      setCategories(flattenCategories);
+
+      const nameMap = {};
+      flattenCategories.forEach(category => {
+        nameMap[category.id] = category.name;
+      });
+      setCategoryNames(nameMap); 
+    } catch (error) {
+      handleAxiosError(error, navigate);
+    } finally { 
+      setLoading(false);
+    }
+  }, [navigate]);
+
+  useEffect(() => { 
+    fetchData();
+  }, [fetchData]);
+
+  const flattenCategoryData = (data) => {
+    let flatData = [];
+    const flatten = (data) => {
+      data.forEach(category => {
+        flatData.push({
+          id: category.id,
+          name: category.name,
+          parent_id: category.parent_id,
+        });
+
+        if (category.sub_categories && category.sub_categories.length > 0) {
+          flatten(category.sub_categories);
+        }
+      });
+    };
+
+    flatten(data);
+    return flatData;
+  };
+
+  const handleEditClick = (category) => { 
+    setSelectedCategory(category);
+    setOpenModal(true);
+  }
+
+  const handleAddClick = () => { 
+    setSelectedCategory(null);
+    setOpenModal(true);
+  }
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setSelectedCategory(null);
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+
+    try {
+      if (selectedCategory?.id) {
+        await updateCategory(selectedCategory.id, {
+          name: selectedCategory.name,
+          parent_id: selectedCategory.parent_id || null,
+        });
+        toast.success("Update category successfully!");
+      } else {
+        await createCategory({
+          name: selectedCategory.name,
+          parent_id: selectedCategory.parent_id || null,
+        });
+        toast.success("Add new category successfully!");
+      }
+
+      setOpenModal(false);
+      await fetchData();
+    } catch (error) {
+      handleAxiosError(error, navigate);
+    }
+  };
+
+  const handleDeleteOneConfirmed = async () => {
+    try {
+      const categoryId = deleteId;
+      await deleteCategory(categoryId);
+      toast.success("Delete successfully !");
+      setDeleteId(null);
+      setOpenDeleteOneDialog(false);
+      await fetchData();
+    } catch (error) {
+      handleAxiosError(error, navigate);
+    }
+  };
 
   const columns = [
-    {
-      field: "image",
-      headerName: "Image",
-      width: 150,
+    { field: 'id', headerName: 'ID', flex: 1, minWidth: 200 },
+    { field: 'name', headerName: 'Name', flex: 1, minWidth: 200 },
+    { 
+      field: 'parent_id', 
+      headerName: 'Parent',
+      flex: 1,
+      minWidth: 200,
       renderCell: (params) => {
-        return (
-          <img
-            src={`${MINIO_URL}/${MINIO_BUCKETNAME}/${params.row.image_url}`}
-            alt="product"
-            className="product-image"
-          />
-        );
-      },
+        const parentName = categoryNames[params.value];
+        return parentName ? <Chip label={parentName} /> : null;
+      }
     },
-    { field: "id", headerName: "ID", width: 220 },
-    { field: "name", headerName: "Name", width: 200 },
-    { field: "description", headerName: "Description", width: 300 },
-    { field: "price", headerName: "Price", type: "number", width: 100 },
-    { field: "discount", headerName: "Discount", type: "number", width: 100 },
-    { field: "quantity", headerName: "Quantity", type: "number", width: 100 },
-    { field: "sold", headerName: "Sold", type: "number", width: 100 },
-    { field: "product_status", headerName: "Status", type: "number" },
-    { field: "is_featured", headerName: "Featured", type: "boolean" },
-    {
-      field: "categories",
-      headerName: "Categories",
-      width: 300,
-      renderCell: (params) => {
-        return (
-          <Box
-            sx={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 0.5,
-              alignItems: "center",
-              justifyContent: "left",
-              height: "100%",
-            }}
-          >
-            {params.row.category_names?.map((name, index) => (
-              <Chip key={index} label={name} size="small" />
-            ))}
-          </Box>
-        );
-      },
-    },
-    {
-      field: "actions",
-      headerName: "Actions",
-      width: 200,
+    { 
+      field: 'action', 
+      headerName: 'Action', 
+      flex: 1, 
+      minWidth: 150, 
       renderCell: (params) => (
         <Box className="action-container">
-          <Tooltip title="Update" placement="top">
-            <IconButton
+          <Tooltip>
+            <IconButton 
               color={colors.primary[600]}
-              onClick={() => {
-                setSelectedProduct(params.row);
-                navigate(`edit/${params.row.id}`);
-              }}
+              onClick={() => {handleEditClick(params.row)}} 
             >
               <EditIcon />
             </IconButton>
@@ -149,228 +161,90 @@ const Category = () => {
               <DeleteIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Duplicate" placement="top">
-            <IconButton
-              onClick={() => {
-                handleDuplicate(params.row);
-              }}
-            >
-              <FileCopyIcon />
-            </IconButton>
-          </Tooltip>
         </Box>
-      ),
-    },
+      )
+    }
   ];
 
-  const handleSearch = useMemo(() =>
-    debounce((text) => {
-      setSearchText(text);
-      setPage(0);
-    }, 500),
-  [setSearchText, setPage], []);
-
-  useEffect(() => {
-    return () => {
-      handleSearch.cancel();
-    };
-  }, [handleSearch]);
-
-  const handleDuplicate = async (product) => {
-    const newProduct = {
-      ...product,
-    };
-    try {
-      await createProductByCategoryNames(newProduct);
-      toast.success("Duplicate product successfully");
-      await fetchData();
-    } catch (error) {
-      handleAxiosError(error, navigate);
-    }
-  };
-
-  const handleDeleteOneConfirmed = async () => {
-    try {
-      const productId = deleteId;
-      await deleteProduct(productId);
-      toast.success("Delete successfully !");
-      setDeleteId(null);
-      setOpenDeleteOneDialog(false);
-      await fetchData();
-    } catch (error) {
-      handleAxiosError(error, navigate);
-    }
-  };
-
-  const handleDeleteManyConfirmed = async () => {
-    const idsToDelete = Array.from(rowSelectionModel.ids);
-    if (idsToDelete.length === 0) {
-      toast.warning("No products selected to delete.");
-      return;
-    }
-    try {
-      await deleteProducts(idsToDelete);
-      toast.success("Deleted selected products successfully!");
-      setRowSelectionModel({ type: "include", ids: new Set() });
-      setOpenDeleteManyDialog(false);
-      await fetchData();
-    } catch (error) {
-      handleAxiosError(error, navigate);
-    }
-  };
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      let res;
-  
-      if (searchText) {
-        res = await fetchProducts(
-          paginationModel.pageSize,
-          paginationModel.page,
-          searchText,
-        );
-      } else if(selectedCategoryId) {
-        res = await fetchProductsWithCategory(
-          paginationModel.pageSize,
-          paginationModel.page,
-          selectedCategoryId
-        );
-      } else {
-        res = await fetchProducts(
-          paginationModel.pageSize,
-          paginationModel.page
-        );
-      }
-  
-      setProducts(res.data);
-      setMeta(res.meta);
-    } catch (error) {
-      handleAxiosError(error, navigate);
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    paginationModel.page,
-    paginationModel.pageSize,
-    selectedCategoryId,
-    searchText,
-    navigate,
-  ]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  // useEffect(() => { 
-  //   console.log(products);
-  // }, [products]);
-
   return (
-    <Box className="product-container">
-      <Header title="PRODUCT" subTitle="Managing the Products" />
+    <Box className="category-container">
+      <Header title="CATEGORY" subTitle="Managing Categories" />
       <AlertDialog
         open={openDeleteOneDialog}
-        text="Are you sure to delete this product ?"
-        title="This will delete your product forever"
+        text="Are you sure to delete this category ?"
+        title="This will delete your category forever"
         onOption1={() => {
           setOpenDeleteOneDialog(false);
         }}
         onOption2={handleDeleteOneConfirmed}
       ></AlertDialog>
-      <AlertDialog
-        open={openDeleteManyDialog}
-        text="Are you sure to delete multiple products ?"
-        title="This will delete your products forever"
-        onOption1={() => {
-          setOpenDeleteManyDialog(false);
-        }}
-        onOption2={handleDeleteManyConfirmed}
-      ></AlertDialog>
       <Box className="filter-box">
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Typography variant="h6" mr={2}>
-            Filter by
-          </Typography>
-
-          <Select
-            value={selectedCategoryId}
-            onChange={(e) => {
-              const selectedId = e.target.value;
-              setSelectedCategoryId(selectedId);
-            }}
-            displayEmpty
-            size="small"
-            className="MuiSelect-root"
-          >
-            <MenuItem value="">All Categories</MenuItem>
-            {categoryOptions.map((cat) => (
-              <MenuItem key={cat.id} value={cat.id}>
-                {cat.name}
-              </MenuItem>
-            ))}
-          </Select>
-
-          <Box m={2}>
-            <SearchBar onChange={handleSearch}/>
-          </Box>
-        </Box>
-
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          {rowSelectionModel.ids.size > 1 && (
-            <Button
-              variant="contained"
-              color="error"
-              onClick={() => setOpenDeleteManyDialog(true)}
-              sx={{ mr: 2 }}
-            >
-              Delete Selected ({rowSelectionModel.ids.size})
-            </Button>
-          )}
-
+        <Box sx={{ display: "flex", alignItems: "center"}}>
           <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={() => {
-              setSelectedProduct(null);
-              navigate("new");
-            }}
-          >
-            Add product
-          </Button>
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={() => {handleAddClick()}}
+            >
+              Add new category
+            </Button>
         </Box>
-      </Box>
+      </Box>  
+
       {!loading && (
         <DataGrid
-          loading={loading}
-          rows={products}
-          rowCount={meta?.total ?? products.length}
+          rows={categories}
           columns={columns}
-          getRowId={(row) => row.id}
-          checkboxSelection
-          onRowSelectionModelChange={(newRowSelectionModel) => {
-            setRowSelectionModel(newRowSelectionModel);
-          }}
-          pagination
-          paginationModel={paginationModel}
-          sortModel={sortModel}
-          filterModel={filterModel}
-          paginationMode="server"
-          sortingMode="server"
-          filterMode="server"
-          pageSizeOptions={[5, 10, 15]}
-          onPaginationModelChange={(model) => {
-            setPage(model.page);
-            setLimit(model.pageSize);
-          }}
-          onSortModelChange={setSortModel}
-          onFilterModelChange={setFilterModel}
+          pageSize={10}
+          rowsPerPageOptions={[10]}
+          disableSelectionOnClick
           sx={{ fontSize: "15px" }}
-          //   disableRowSelectionOnClick
+          pagination
+          pageSizeOptions={[5, 10, 15]}
         />
       )}
-    </Box>
+
+      <Dialog open={openModal} onClose={handleCloseModal}>
+        <DialogTitle>
+          {selectedCategory?.id ? "Edit Category" : "Add Category"}
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Category Name"
+            value={selectedCategory?.name || ''}
+            onChange={(e) => setSelectedCategory({ ...selectedCategory, name: e.target.value })}
+            fullWidth
+            margin="normal"
+          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Parent Category</InputLabel>
+            <Select
+              value={selectedCategory?.parent_id || ''}
+              onChange={(e) => setSelectedCategory({ ...selectedCategory, 
+                                                  parent_id: e.target.value })}
+              label="Parent Category"
+            >
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+              {categories.map((category) => (
+                <MenuItem key={category.id} value={category.id}>
+                  {category.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseModal} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleSave} color="primary">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>  
   );
 };
 

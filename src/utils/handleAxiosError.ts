@@ -1,13 +1,17 @@
 import { toast } from 'react-toastify';
 
 export const handleAxiosError = (error, navigate) => {
+  console.error(error);
+
   if (!error.response) {
     toast.error("Network error. Please check your internet connection.");
     return;
   }
 
+  const errorMessage = error.response?.data?.message || "Something went wrong. Please try again.";
+
   if (error.response.status === 401) {
-    toast.error("Session expired. Please log in again.");
+    toast.error(errorMessage);
     if (navigate) {
       navigate('/login');
     }
@@ -15,12 +19,12 @@ export const handleAxiosError = (error, navigate) => {
   }
 
   if (error.response.status === 403) {
-    toast.error("Permission denied. You do not have access.");
+    toast.error(errorMessage);
     return;
   }
 
   if (error.response.status === 404) {
-    toast.error("Resource not found. Please check your request.");
+    toast.error(errorMessage);
     return;
   }
 
@@ -28,6 +32,5 @@ export const handleAxiosError = (error, navigate) => {
     toast.error("Server error. Please try again later.");
     return;
   }
-
-  toast.error("Something went wrong. Please try again.");
+  toast.error(errorMessage);
 };

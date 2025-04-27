@@ -1,9 +1,10 @@
 // utils/axios.ts
 import axios from 'axios'
 import LocalStorageService from './localStorageService.ts'
+import { API_BASE_URL } from '../constants/config.js';
 
 const axiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL,
+  baseURL: API_BASE_URL,
   withCredentials: true,
 })
 
