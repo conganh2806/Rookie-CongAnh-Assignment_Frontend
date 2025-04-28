@@ -39,7 +39,7 @@ import {
 import FileCopyIcon from "@mui/icons-material/FileCopy";
 import { DEFAULT_PAGINATION } from "../../constants/productPaginationConfig.ts";
 import SearchBar from "../../components/SearchBar.jsx";
-import "../../css/Product.css";
+import "../../css/common.css";
 import debounce from "lodash.debounce";
 import { usePaginationQuery } from "../../hooks/usePaginationQuery.js";
 
@@ -267,7 +267,7 @@ const Product = () => {
   // }, [products]);
 
   return (
-    <Box className="product-container">
+    <Box className="container">
       <Header title="PRODUCT" subTitle="Managing the Products" />
       <AlertDialog
         open={openDeleteOneDialog}
