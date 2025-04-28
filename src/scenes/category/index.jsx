@@ -1,6 +1,6 @@
 import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Select, TextField, Tooltip, useTheme } from "@mui/material";
 import Header from "../../components/Header";
-import '../../css/Category.css';
+import '../../css/common.css';
 import { DataGrid } from "@mui/x-data-grid";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -29,7 +29,6 @@ const Category = () => {
     setLoading(true);
     try { 
       let res = await fetchCategories();
-      console.log(res);
       const flattenCategories = flattenCategoryData(res);
       setCategories(flattenCategories);
 
@@ -167,7 +166,7 @@ const Category = () => {
   ];
 
   return (
-    <Box className="category-container">
+    <Box className="container">
       <Header title="CATEGORY" subTitle="Managing Categories" />
       <AlertDialog
         open={openDeleteOneDialog}
