@@ -21,6 +21,9 @@ import AppRegistrationIcon from "@mui/icons-material/AppRegistration";
 import { useAuth } from "../../context/auth-context";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CategoryIcon from '@mui/icons-material/Category';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import ProductionQuantityLimitsIcon from '@mui/icons-material/ProductionQuantityLimits';
+
 
 const Item = ({ title, to, icon, selected, setSelected, onClick }) => {
   const theme = useTheme();
@@ -146,6 +149,13 @@ const Sidebar = () => {
               Data
             </Typography>
             <Item
+              title="Manage Accounts"
+              to="/accounts"
+              icon={<ManageAccountsIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
               title="Manage Product"
               to="/products"
               icon={<PeopleOutlinedIcon />}
@@ -156,6 +166,13 @@ const Sidebar = () => {
               title="Manage Category"
               to="/categories"
               icon={<CategoryIcon/>}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Order"
+              to="/orders"
+              icon={<ProductionQuantityLimitsIcon/>}
               selected={selected}
               setSelected={setSelected}
             />
