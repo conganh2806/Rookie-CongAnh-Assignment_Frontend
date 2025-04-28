@@ -11,8 +11,6 @@ export const createCategory = async (formData) => {
 };
 
 export const updateCategory = async (categoryId, formData) => {
-    console.log(`Category id: ${categoryId}`);
-    console.log(`Form data: ${JSON.stringify(formData)}`);
     const response = await axiosInstance.put(`category/${categoryId}`, formData);
     return response.data;
 };
