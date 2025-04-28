@@ -13,7 +13,6 @@ const UpdateProduct = () => {
     const fetchData = async () => {
       try {
         const response = await fetchProduct(id);
-        console.log(response);
         setDefaultValues(response);
       } catch (error) {
         handleAxiosError(error, navigate);
