@@ -1,13 +1,15 @@
 import axiosInstance from "./httpService";
 
 export const fetchProducts = async (limit, page, searchTerm = "") => {
-    const queryString = new URLSearchParams({
-        Limit: limit,
-        Page: page,
-        SearchText: searchTerm,
-    }).toString();
+    const queryParams = {};
 
+    if (limit) queryParams.Limit = limit;
+    if (page) queryParams.Page = page;
+    if (searchTerm) queryParams.SearchText = searchTerm;
+
+    const queryString = new URLSearchParams(queryParams).toString();
     const response = await axiosInstance.get(`/products?${queryString}`);
+    
     return response.data;
 };
 
@@ -61,8 +63,6 @@ export const createProductByCategoryNames = async (formData) => {
 };
 
 export const updateProduct = async (productId, formData) => {
-    console.log(`Product id: ${productId}`);
-    console.log(`Form data: ${JSON.stringify(formData)}`);
     const response = await axiosInstance.put(`/products/${productId}`, formData);
     return response.data;
 };
